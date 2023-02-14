@@ -1,5 +1,9 @@
 #include "ECS.hpp"
+#include "../Logger/Logger.hpp"
 #include <algorithm>
+
+//init static nextId 
+int IComponent::nextId = 0;
 
 int Entity::getId() const {
     return id;
@@ -21,5 +25,29 @@ std::vector<Entity> System::getSystemEntities() const {
 
 const Signature& System::getComponentSignature() const {
     return componentSignature;
+}
+
+Entity Registry::createEntity() {
+    int entityId = numEntities++;
+    Entity entity(entityId);
+    addEntityBuffer.insert(entity);
+    Logger::Log("Entity created with id " + std::to_string(entityId));
+    return entity;
+}
+
+void Registry::killEntity(Entity entity) {
+    removeEntityBuffer.insert(entity);
+}
+
+void Registry::addEntityToSystem(Entity entity) {
+    const auto entityId = entity.getId();
+    for(auto& system : systems) {
+        const auto& sysCompoSign = system.second->getComponentSignature();
+        if((ecSignatures[entityId] ^ sysCompoSign) == 0) {
+            system.second->addEntity(entity);
+        }
+    }
+}
+void Registry::update() {
 }
 
