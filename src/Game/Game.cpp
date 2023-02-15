@@ -3,8 +3,14 @@
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
 #include "../Logger/Logger.hpp"
+#include "../ECS/ECS.hpp"
 
-Game::Game() { Logger::Log("constructed game object");}
+Game::Game() { 
+    isRunning = false;
+    registry = new Registry();
+    Logger::Log("constructed game object");
+
+}
 Game::~Game() { Logger::Log("game object destroyed");}
 void Game::Init() {
     if(SDL_Init(SDL_INIT_EVERYTHING)) {
@@ -52,8 +58,9 @@ void Game::ProcessInput() {
 glm::vec2 playerPos;
 glm::vec2 playerVelocity;
 void Game::Setup() {
-    playerPos = glm::vec2(10,20);
-    playerVelocity = glm::vec2(100, 0);
+    Entity foo = registry->createEntity();
+    Entity bar = registry->createEntity();
+
 }
 void Game::Update() {
 

@@ -5,7 +5,7 @@
 #include <bitset>
 #include <cstdlib>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <unordered_map>
 #include <typeindex>
 #include <functional>
@@ -23,7 +23,14 @@ class Entity {
         int id;
     public:
         Entity(int id): id{id} {};
+        Entity(const Entity& entity) = default;
         int getId() const;
+        Entity& operator =(const Entity& other) = default;
+
+        bool operator ==(const Entity& other) const { return id == other.id; }
+        bool operator !=(const Entity& other) const { return id != other.id; }
+        bool operator >(const Entity& other) const { return id > other.id; }
+        bool operator <(const Entity& other) const { return id < other.id; }
 };
 
 //assign unique id to a component type
@@ -83,7 +90,9 @@ class Registry{
         // vector index == entity id
         std::vector<Signature> ecSignatures;
         std::unordered_map<std::type_index, System*> systems;
-        std::unordered_set<Entity> addEntityBuffer, removeEntityBuffer;
+        std::set<Entity> addEntityBuffer, removeEntityBuffer;
+    public: 
+        Registry() = default;
         Entity createEntity();
         void update();
         void killEntity(Entity entity);

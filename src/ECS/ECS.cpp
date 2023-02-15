@@ -31,6 +31,9 @@ Entity Registry::createEntity() {
     int entityId = numEntities++;
     Entity entity(entityId);
     addEntityBuffer.insert(entity);
+    if(entityId >= static_cast<int>(ecSignatures.size())) {
+        ecSignatures.resize(entityId + 1);
+    }
     Logger::Log("Entity created with id " + std::to_string(entityId));
     return entity;
 }
@@ -49,5 +52,11 @@ void Registry::addEntityToSystem(Entity entity) {
     }
 }
 void Registry::update() {
+    // add queued entities to active Systems
+    // TODO: Maybe improve 
+    for(auto entity : addEntityBuffer) {
+        addEntityToSystem(entity);
+    }
+    addEntityBuffer.clear();
 }
 
