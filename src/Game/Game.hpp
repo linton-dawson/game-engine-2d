@@ -2,6 +2,8 @@
 #define GAME_HPP
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <filesystem>
+#include "../AssetManager/AssetManager.hpp"
 #include "../ECS/ECS.hpp"
 
 const int fps = 60;
@@ -12,7 +14,8 @@ class Game {
         SDL_Renderer* renderer;
         int previousTick = 0;
         bool isRunning;
-        Registry* registry;
+        std::unique_ptr<Registry> registry;
+        std::unique_ptr<AssetManager> assetManager;
     public:
         Game();
         ~Game();
@@ -20,6 +23,7 @@ class Game {
         void Run();
         void ProcessInput();
         void Setup();
+        void LoadLevel(int level);
         void Update();
         void Render();
         void Destroy();
