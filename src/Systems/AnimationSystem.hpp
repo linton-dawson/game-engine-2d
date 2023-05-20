@@ -1,0 +1,29 @@
+#ifndef ANIMATIONSYSTEM_HPP
+#define ANIMATIONSYSTEM_HPP
+
+#include <SDL2/SDL.h>
+#include "../ECS/ECS.hpp"
+#include "../Components/SpriteComponent.hpp"
+#include "../Components/AnimationComponent.hpp"
+
+
+class AnimationSystem : public System {
+    public:
+        AnimationSystem() {
+            requireComponent<SpriteComponent>();
+            requireComponent<AnimationComponent>();
+        }
+
+        void update() {
+            for(auto entity : getSystemEntities()) {
+                auto& animation = entity.getComponent<AnimationComponent>();
+                auto& sprite = entity.getComponent<SpriteComponent>();
+
+                animation.currFrame = ((SDL_GetTicks() - animation.currFrame) * animation.frameSpeedRate) % animation.numFrames;
+                sprite.srcRect.x = animation.currFrame * sprite.w;
+
+            }
+        }
+};
+
+#endif
