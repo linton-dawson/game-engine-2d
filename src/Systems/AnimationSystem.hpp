@@ -6,6 +6,7 @@
 #include "../Components/SpriteComponent.hpp"
 #include "../Components/AnimationComponent.hpp"
 
+// TODO: Implement animation grouping by name
 
 class AnimationSystem : public System {
     public:

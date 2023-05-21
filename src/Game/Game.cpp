@@ -13,8 +13,10 @@
 #include "../Components/TransformComponent.hpp"
 #include "../Components/RigidBodyComponent.hpp"
 #include "../Components/SpriteComponent.hpp"
+#include "../Components/AnimationComponent.hpp"
 #include "../Systems/MovementSystem.hpp"
 #include "../Systems/RenderSystem.hpp"
+#include "../Systems/AnimationSystem.hpp"
 #include "../ECS/ECS.hpp"
 
 Game::Game() { 
@@ -32,7 +34,7 @@ void Game::Init() {
     SDL_DisplayMode displayMode;
     SDL_GetCurrentDisplayMode(0, &displayMode);
     window = SDL_CreateWindow("jabardast window", 
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_BORDERLESS);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_BORDERLESS);
     if(!window) {
         std::cerr << "Error creating SDL window" << std::endl;
         return;
@@ -96,6 +98,7 @@ std::optional<std::pair<std::vector<int>, uint8_t>>_readTileMap(std::filesystem:
                 num.clear();
             }
         }
+        readMap.close();
         Logger::Log("TOTAL NUMBER OF ROWS: "+std::to_string(colElementNum));
         return std::optional<std::pair<std::vector<int>, uint8_t>>{std::make_pair(tileMap, colElementNum)};
     }
@@ -110,17 +113,19 @@ std::optional<std::pair<std::vector<int>, uint8_t>>_readTileMap(std::filesystem:
 void Game::LoadLevel(int level) {
     //creating systems
     registry->addSystem<RenderSystem>();
+    registry->addSystem<MovementSystem>();
+    registry->addSystem<AnimationSystem>();
     
     //adding assets to the asset manager
+    assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
+    assetManager->addTexture(renderer, "chopper", "./assets/images/chopper.png");
+    assetManager->addTexture(renderer, "radar", "./assets/images/radar.png");
     assetManager->addTexture(renderer, "jungle", "./assets/tilemaps/jungle.png");
 
     auto tileObj = _readTileMap(std::filesystem::path("./assets/tilemaps/jungle.map"));
-    std::vector<Entity> tilemapEntities;
-    tilemapEntities.reserve(30);
     int y = 0;
     for(int tileIndex = 0; tileIndex < static_cast<int>(tileObj.value().first.size()); ++tileIndex) {
         if(tileIndex && tileIndex% tileObj.value().second == 0) {
-            Logger::Log("ADDING NEW ROW");
             y++;
         }
         int x = tileIndex % tileObj.value().second;
@@ -128,13 +133,28 @@ void Game::LoadLevel(int level) {
         Entity tile = registry->createEntity();
         tile.addComponent<TransformComponent>(glm::vec2(32*x, 32*y), glm::vec2(1.0,1.0),0.0);
         tile.addComponent<SpriteComponent>("jungle",32, 32, 32*(tileNumber%10), 32*(tileNumber/10));
-        Logger::Log("ROW NUMBER: " + std::to_string(y));
-        Logger::Log("TILE NUMBER: " + std::to_string(tileObj.value().first.at(tileIndex)));
-        Logger::Log("TILE POS: " + std::to_string(32*(tileNumber%10)) + "," + std::to_string(32*(tileNumber/10)));
-        Logger::Log("TILEMAP index: " + std::to_string(x) + "," + std::to_string(y));
         
     }
 
+    // chopper
+    Entity chopper = registry->createEntity();
+    chopper.addComponent<TransformComponent>(glm::vec2(1.0,1.0), glm::vec2(1,1), 0.0);
+    chopper.addComponent<SpriteComponent>("chopper",32,32);
+    chopper.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
+    chopper.addComponent<AnimationComponent>(2, 5, true);    
+
+    // radar
+    Entity radar = registry->createEntity();
+    radar.addComponent<TransformComponent>(glm::vec2(windowWidth - 74,10.0), glm::vec2(1,1), 0.0);
+    radar.addComponent<SpriteComponent>("radar",64,64);
+    radar.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
+    radar.addComponent<AnimationComponent>(8, 5, true);
+//    Entity tank = registry->createEntity();
+//    tank.addComponent<TransformComponent>(glm::vec2(1.0,1.0), glm::vec2(1,1), 0.0);
+//    tank.addComponent<SpriteComponent>("tank",32,32);
+//    tank.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
+
+    
 }
 void Game::Setup() {
     LoadLevel(1);
@@ -149,14 +169,15 @@ void Game::Update() {
     }
     
     // Duration since last frame in seconds
-//    double deltaTime = static_cast<double>(SDL_GetTicks() - previousTick)/1000;
+    double deltaTime = static_cast<double>(SDL_GetTicks() - previousTick)/1000;
 
     previousTick = SDL_GetTicks();
 
     // update registry queued actions
     registry->update();
 
-    //registry->getSystem<MovementSystem>().update(deltaTime);
+    registry->getSystem<MovementSystem>().update(deltaTime);
+    registry->getSystem<AnimationSystem>().update();
 }
 void Game::Render() {
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
