@@ -20,7 +20,7 @@ class AnimationSystem : public System {
                 auto& animation = entity.getComponent<AnimationComponent>();
                 auto& sprite = entity.getComponent<SpriteComponent>();
 
-                animation.currFrame = ((SDL_GetTicks() - animation.currFrame) * animation.frameSpeedRate) % animation.numFrames;
+                animation.currFrame = ((SDL_GetTicks() - animation.startTime) * animation.frameSpeedRate/1000) % animation.numFrames;
                 sprite.srcRect.x = animation.currFrame * sprite.w;
 
             }
