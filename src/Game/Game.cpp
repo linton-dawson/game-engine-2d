@@ -14,8 +14,10 @@
 #include "../Components/RigidBodyComponent.hpp"
 #include "../Components/SpriteComponent.hpp"
 #include "../Components/AnimationComponent.hpp"
+#include "../Components/BoxColliderComponent.hpp"
 #include "../Systems/MovementSystem.hpp"
 #include "../Systems/RenderSystem.hpp"
+#include "../Systems/CollisionSystem.hpp"
 #include "../Systems/AnimationSystem.hpp"
 #include "../ECS/ECS.hpp"
 
@@ -115,6 +117,7 @@ void Game::LoadLevel(int level) {
     registry->addSystem<RenderSystem>();
     registry->addSystem<MovementSystem>();
     registry->addSystem<AnimationSystem>();
+    registry->addSystem<CollisionSystem>();
     
     //adding assets to the asset manager
     assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
@@ -138,22 +141,25 @@ void Game::LoadLevel(int level) {
 
     // chopper
     Entity chopper = registry->createEntity();
-    chopper.addComponent<TransformComponent>(glm::vec2(1.0,1.0), glm::vec2(1,1), 0.0);
+    chopper.addComponent<TransformComponent>(glm::vec2(10.0,10.0), glm::vec2(1,1), 0.0);
     chopper.addComponent<SpriteComponent>("chopper",32,32);
     chopper.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
-    chopper.addComponent<AnimationComponent>(2, 5, true);    
+    chopper.addComponent<AnimationComponent>(2, 15, true);    
+    chopper.addComponent<BoxColliderComponent>(32,32);    
 
     // radar
     Entity radar = registry->createEntity();
-    radar.addComponent<TransformComponent>(glm::vec2(windowWidth - 74,10.0), glm::vec2(1,1), 0.0);
-    radar.addComponent<SpriteComponent>("radar",64,64);
+    radar.addComponent<TransformComponent>(glm::vec2(windowWidth - 84,10.0), glm::vec2(1,1), 0.0);
+    radar.addComponent<SpriteComponent>("radar",64,64,2);
     radar.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
-    radar.addComponent<AnimationComponent>(8, 5, true);
-//    Entity tank = registry->createEntity();
-//    tank.addComponent<TransformComponent>(glm::vec2(1.0,1.0), glm::vec2(1,1), 0.0);
-//    tank.addComponent<SpriteComponent>("tank",32,32);
-//    tank.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
-
+    radar.addComponent<AnimationComponent>(8, 7, true);
+    
+    //tank
+    Entity tank = registry->createEntity();
+    tank.addComponent<TransformComponent>(glm::vec2(500.0,10.0), glm::vec2(1,1), 0.0);
+    tank.addComponent<SpriteComponent>("tank",32,32);
+    tank.addComponent<RigidBodyComponent>(glm::vec2(-40.0, 0.0));
+    tank.addComponent<BoxColliderComponent>(32,32);    
     
 }
 void Game::Setup() {
@@ -178,6 +184,7 @@ void Game::Update() {
 
     registry->getSystem<MovementSystem>().update(deltaTime);
     registry->getSystem<AnimationSystem>().update();
+    registry->getSystem<CollisionSystem>().update();
 }
 void Game::Render() {
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
