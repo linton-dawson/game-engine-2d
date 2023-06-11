@@ -159,7 +159,7 @@ void Game::LoadLevel(int level) {
     tank.addComponent<TransformComponent>(glm::vec2(500.0,10.0), glm::vec2(1,1), 0.0);
     tank.addComponent<SpriteComponent>("tank",32,32);
     tank.addComponent<RigidBodyComponent>(glm::vec2(-40.0, 0.0));
-    tank.addComponent<BoxColliderComponent>(32,32);    
+    tank.addComponent<BoxColliderComponent>(32,32);
     
 }
 void Game::Setup() {

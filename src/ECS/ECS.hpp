@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <vector>
 #include <set>
+#include <deque>
 #include <unordered_map>
 #include <typeindex>
 #include <functional>
@@ -27,6 +28,7 @@ class Entity {
         Entity(int id): id{id} {};
         Entity(const Entity& entity) = default;
         int getId() const;
+        void kill();
         Entity& operator =(const Entity& other) = default;
 
         bool operator ==(const Entity& other) const { return id == other.id; }
@@ -107,12 +109,16 @@ class Registry{
         std::vector<Signature> ecSignatures;
         std::unordered_map<std::type_index, std::shared_ptr<System>> systems;
         std::set<Entity> addEntityBuffer, removeEntityBuffer;
+
+        // list of free entityids that were removed, which can be reused
+        std::deque<int> freeIds;
     public: 
         Registry() = default;
         Entity createEntity();
         void update();
         void killEntity(Entity entity);
         void addEntityToSystem(Entity entity);
+        void removeEntityFromSystem(Entity entity);
         template <typename TComponent, typename ...TArgs> void addComponent(Entity entity, TArgs&& ...args);
         template<typename TComponent> void removeComponent(Entity entity);
         template<typename TComponent> bool hasComponent(Entity entity) const;
@@ -211,7 +217,7 @@ void Entity::removeComponent() {
 }
 template<typename TComponent> 
 bool Entity::hasComponent() const {
-    return registry->removeComponent<TComponent>(*this);
+    return registry->hasComponent<TComponent>(*this);
 }
 template<typename TComponent> 
 TComponent& Entity::getComponent() const {

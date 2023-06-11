@@ -16,6 +16,7 @@ class Game {
         bool isRunning;
         std::unique_ptr<Registry> registry;
         std::unique_ptr<AssetManager> assetManager;
+        std::unique_ptr<EventBus> eventBus;
         int windowWidth = 800, windowHeight = 600;
     public:
         Game();
