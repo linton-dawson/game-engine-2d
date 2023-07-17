@@ -20,24 +20,25 @@ class IEventCallback {
 };
 
 template <typename TOwner, typename TEvent>
-class EventCallback : IEventCallback {
+class EventCallback : public IEventCallback {
     private:
         typedef void (TOwner::*CallbackFunction)(TEvent&);
 
         TOwner* ownerInstance;
-        CallbackFunction cbFunc;
+        CallbackFunction callbackFunction;
         virtual void call(Event& e) override{
-            std::invoke(cbFunc, ownerInstance, static_cast<TEvent&>(e));
+            std::invoke(callbackFunction, ownerInstance, static_cast<TEvent&>(e));
         }
     public:
-        EventCallback(TOwner* ownerInstance, CallbackFunction cbFunc) {
+        EventCallback(TOwner* ownerInstance, CallbackFunction callbackFunction) {
             this->ownerInstance = ownerInstance;
-            this->cbFunc = cbFunc;
+            this->callbackFunction = callbackFunction;
         }
         virtual ~EventCallback() override = default;
 };
 
 typedef std::list<std::unique_ptr<IEventCallback>> HandlerList;
+
 class EventBus {
     private:
         //key= any event
@@ -62,7 +63,7 @@ class EventBus {
                 subscribers[typeid(TEvent)] = std::make_unique<HandlerList>();
             }
             auto subscriber = std::make_unique<EventCallback<TOwner,TEvent>>(ownerInstance, callbackFunction);
-            subscribers[typeid(TEvent)]->push_back(std::move(subscriber));
+           subscribers[typeid(TEvent)]->push_back(std::move(subscriber));
 
         }
         
