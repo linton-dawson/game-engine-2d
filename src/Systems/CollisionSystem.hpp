@@ -4,6 +4,8 @@
 #include "../ECS/ECS.hpp"
 #include "../Components/BoxColliderComponent.hpp"
 #include "../Components/TransformComponent.hpp"
+#include "../EventBus/EventBus.hpp"
+#include "../Events/CollisionEvent.hpp"
 
 class CollisionSystem : public System {
     public:
@@ -16,7 +18,7 @@ class CollisionSystem : public System {
             return(ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by);
         }
 
-        void update() {
+        void update(std::unique_ptr<EventBus>& eventBus) {
             auto entities = getSystemEntities();
             for(auto it = entities.begin(); it != entities.end(); ++it) {
                 auto a = *it;
@@ -31,6 +33,7 @@ class CollisionSystem : public System {
 
                     if(collides) {
                         Logger::Log("Entity " + std::to_string(a.getId()) + " collides with " + std::to_string(b.getId()));
+                        eventBus->emitEvent<CollisionEvent>(a,b);
                     }
                 }
             }

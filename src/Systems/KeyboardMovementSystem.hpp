@@ -4,10 +4,17 @@
 #include "../ECS/ECS.hpp"
 #include "../EventBus/EventBus.hpp"
 #include "../Events/KeypressedEvent.hpp"
+#include "../Components/KeyboardControlledComponent.hpp"
+#include "../Components/SpriteComponent.hpp"
+#include "../Components/RigidBodyComponent.hpp"
+
 
 class KeyboardMovementSystem: public System {
     public:
         KeyboardMovementSystem() {
+            requireComponent<KeyboardControlledComponent>();
+            requireComponent<SpriteComponent>();
+            requireComponent<RigidBodyComponent>();
         }
 
         void subscribeToEvents(std::unique_ptr<EventBus>& eventBus) {
@@ -15,9 +22,11 @@ class KeyboardMovementSystem: public System {
         }
 
         void onKeyPressed(KeyPressedEvent& event) {
-            std::string keyCode = std::to_string(event.symbol);
-            std::string keySymbol(1, event.symbol);
-            Logger::Log("KeyPressedEvent: [" + keyCode + "] " + keySymbol);
+            for(auto entity: getSystemEntities()) {
+                auto keyboardControl = entity.getComponent<KeyboardControlledComponent>();
+                auto sprite = entity.getComponent<SpriteComponent>();
+                auto rigidBody = entity.getComponent<RigidBodyComponent>();
+            }
         }
 };
 #endif
