@@ -15,16 +15,24 @@
 #include "../Components/SpriteComponent.hpp"
 #include "../Components/AnimationComponent.hpp"
 #include "../Components/BoxColliderComponent.hpp"
+#include "../Components/KeyboardControlledComponent.hpp"
+#include "../Components/CameraFollowComponent.hpp"
 #include "../Systems/MovementSystem.hpp"
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/CollisionSystem.hpp"
 #include "../Systems/AnimationSystem.hpp"
+#include "../Systems/DamageSystem.hpp"
+#include "../Systems/KeyboardMovementSystem.hpp"
+#include "../Systems/CameraMovementSystem.hpp"
 #include "../ECS/ECS.hpp"
+
+int Game::windowWidth, Game::windowHeight, Game::mapWidth, Game::mapHeight;
 
 Game::Game() { 
     isRunning = false;
     registry = std::make_unique<Registry>();
     assetManager = std::make_unique<AssetManager>();
+    eventBus = std::make_unique<EventBus>();
     Logger::Log("constructed game object");
 }
 Game::~Game() { Logger::Log("game object destroyed");}
@@ -45,6 +53,12 @@ void Game::Init() {
     if(!renderer) { std::cerr << "Error creating SDL renderer" << std::endl;
         return;
     }
+
+    camera.x = 0;
+    camera.y = 0;
+    camera.w = windowWidth;
+    camera.h = windowHeight;
+
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
     isRunning = true;
 }
@@ -67,6 +81,7 @@ void Game::ProcessInput() {
                 if(event.key.keysym.sym == SDLK_ESCAPE) {
                     isRunning = false;
                 }
+                eventBus->emitEvent<KeyPressedEvent>(event.key.keysym.sym);
                 break;
         }
     }
@@ -118,10 +133,13 @@ void Game::LoadLevel(int level) {
     registry->addSystem<MovementSystem>();
     registry->addSystem<AnimationSystem>();
     registry->addSystem<CollisionSystem>();
+    registry->addSystem<DamageSystem>();
+    registry->addSystem<KeyboardMovementSystem>();
+    registry->addSystem<CameraMovementSystem>();
     
     //adding assets to the asset manager
     assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
-    assetManager->addTexture(renderer, "chopper", "./assets/images/chopper.png");
+    assetManager->addTexture(renderer, "chopper", "./assets/images/chopper-spritesheet.png");
     assetManager->addTexture(renderer, "radar", "./assets/images/radar.png");
     assetManager->addTexture(renderer, "jungle", "./assets/tilemaps/jungle.png");
 
@@ -136,16 +154,20 @@ void Game::LoadLevel(int level) {
         Entity tile = registry->createEntity();
         tile.addComponent<TransformComponent>(glm::vec2(32*x, 32*y), glm::vec2(1.0,1.0),0.0);
         tile.addComponent<SpriteComponent>("jungle",32, 32, 32*(tileNumber%10), 32*(tileNumber/10));
-        
     }
+    tileObj.close();
+    mapWidth = 
+
 
     // chopper
     Entity chopper = registry->createEntity();
-    chopper.addComponent<TransformComponent>(glm::vec2(10.0,10.0), glm::vec2(1,1), 0.0);
+    chopper.addComponent<TransformComponent>(glm::vec2(0.0,100.0), glm::vec2(1,1), 0.0);
     chopper.addComponent<SpriteComponent>("chopper",32,32);
     chopper.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
     chopper.addComponent<AnimationComponent>(2, 15, true);    
     chopper.addComponent<BoxColliderComponent>(32,32);    
+    chopper.addComponent<KeyboardControlledComponent>(glm::vec2(0,-70), glm::vec2(70,0), glm::vec2(0,70), glm::vec2(-70,0));
+    chopper.addComponent<CameraFollowComponent>();
 
     // radar
     Entity radar = registry->createEntity();
@@ -179,18 +201,25 @@ void Game::Update() {
 
     previousTick = SDL_GetTicks();
 
+    eventBus->reset();
+
+    // perform subscription of events for all systems
+    registry->getSystem<DamageSystem>().subscribeToEvents(eventBus);
+    registry->getSystem<KeyboardMovementSystem>().subscribeToEvents(eventBus);
+    
     // update registry queued actions
     registry->update();
 
     registry->getSystem<MovementSystem>().update(deltaTime);
     registry->getSystem<AnimationSystem>().update();
-    registry->getSystem<CollisionSystem>().update();
+    registry->getSystem<CollisionSystem>().update(eventBus);
+    registry->getSystem<CameraMovementSystem>().update(camera);
 }
 void Game::Render() {
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
     SDL_RenderClear(renderer);
     
-    registry->getSystem<RenderSystem>().update(renderer, assetManager);
+    registry->getSystem<RenderSystem>().update(renderer, assetManager, camera);
     SDL_RenderPresent(renderer);
 }
 void Game::Destroy() {

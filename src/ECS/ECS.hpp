@@ -25,7 +25,7 @@ class Entity {
         int id;
 
     public:
-        Entity(int id): id{id} {};
+        Entity(int id): id(id) {};
         Entity(const Entity& entity) = default;
         int getId() const;
         void kill();
@@ -75,7 +75,7 @@ class System{
 
 class IPool {
     public:
-        ~IPool(){};
+        virtual ~IPool(){};
 };
 // A pool is just a vector of object type T
 template<typename TComponent>
@@ -84,7 +84,7 @@ class Pool : public IPool {
         std::vector<TComponent> data;
     public:
         Pool(int size = 100) { data.resize(size); };
-        ~Pool() = default;
+        virtual ~Pool() = default;
         bool isEmpty() { return data.empty(); }
         int getSize() {return data.size();}
         void resize(int newSize) {data.resize(newSize);}
@@ -114,6 +114,7 @@ class Registry{
         std::deque<int> freeIds;
     public: 
         Registry() = default;
+        ~Registry() = default;
         Entity createEntity();
         void update();
         void killEntity(Entity entity);

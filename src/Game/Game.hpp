@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "../AssetManager/AssetManager.hpp"
 #include "../ECS/ECS.hpp"
+#include "../EventBus/EventBus.hpp"
 
 const int fps = 60;
 const int ms_per_frame = 1000/fps;
@@ -12,12 +13,12 @@ class Game {
     private:
         SDL_Window* window;
         SDL_Renderer* renderer;
+        SDL_Rect camera;
         int previousTick = 0;
         bool isRunning;
         std::unique_ptr<Registry> registry;
         std::unique_ptr<AssetManager> assetManager;
         std::unique_ptr<EventBus> eventBus;
-        int windowWidth = 800, windowHeight = 600;
     public:
         Game();
         ~Game();
@@ -29,5 +30,6 @@ class Game {
         void Update();
         void Render();
         void Destroy();
+        static int windowWidth, windowHeight, mapWidth, mapHeight;
 };
 #endif
