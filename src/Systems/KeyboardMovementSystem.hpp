@@ -23,9 +23,27 @@ class KeyboardMovementSystem: public System {
 
         void onKeyPressed(KeyPressedEvent& event) {
             for(auto entity: getSystemEntities()) {
-                auto keyboardControl = entity.getComponent<KeyboardControlledComponent>();
-                auto sprite = entity.getComponent<SpriteComponent>();
-                auto rigidBody = entity.getComponent<RigidBodyComponent>();
+                const auto keyboardControl = entity.getComponent<KeyboardControlledComponent>();
+                auto& sprite = entity.getComponent<SpriteComponent>();
+                auto& rigidBody = entity.getComponent<RigidBodyComponent>();
+                switch(event.symbol) {
+                    case SDLK_w:
+                        rigidBody.velocity = keyboardControl.up;
+                        sprite.srcRect.y = sprite.h * 0;
+                        break;
+                    case SDLK_d:
+                        rigidBody.velocity = keyboardControl.right;
+                        sprite.srcRect.y = sprite.h * 1;
+                        break;
+                    case SDLK_s:
+                        rigidBody.velocity = keyboardControl.down;
+                        sprite.srcRect.y = sprite.h * 2;
+                        break;
+                    case SDLK_a:
+                        rigidBody.velocity = keyboardControl.left;
+                        sprite.srcRect.y = sprite.h * 3;
+                        break;
+                }
             }
         }
 };
