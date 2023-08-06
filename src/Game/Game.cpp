@@ -43,6 +43,8 @@ void Game::Init() {
     }
     SDL_DisplayMode displayMode;
     SDL_GetCurrentDisplayMode(0, &displayMode);
+    windowWidth = displayMode.w;
+    windowHeight = displayMode.h;
     window = SDL_CreateWindow("jabardast window", 
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_BORDERLESS);
     if(!window) {
@@ -152,12 +154,16 @@ void Game::LoadLevel(int level) {
         int x = tileIndex % tileObj.value().second;
         auto tileNumber = tileObj.value().first.at(tileIndex);
         Entity tile = registry->createEntity();
-        tile.addComponent<TransformComponent>(glm::vec2(32*x, 32*y), glm::vec2(1.0,1.0),0.0);
+        tile.addComponent<TransformComponent>(glm::vec2(32*2*x, 32*2*y), glm::vec2(2.0,2.0),0.0);
         tile.addComponent<SpriteComponent>("jungle",32, 32, 32*(tileNumber%10), 32*(tileNumber/10));
     }
-    tileObj.close();
-    mapWidth = 
-
+    //TODO: Add tilemap scale. currently it's 2.
+    //TODO: add 32 as tileSize variable instead of raw value
+    mapWidth = tileObj.value().second * 32 * 2;
+//    mapHeight = tileObj.value().first.size();
+    mapHeight = 1280;
+    Logger::Log("mapWidth = " + std::to_string(mapWidth) + " mapHeight = " + std::to_string(mapHeight));
+    Logger::Log("windowWidth = " + std::to_string(windowWidth) + " windowHeight = " + std::to_string(windowHeight));
 
     // chopper
     Entity chopper = registry->createEntity();
@@ -172,7 +178,7 @@ void Game::LoadLevel(int level) {
     // radar
     Entity radar = registry->createEntity();
     radar.addComponent<TransformComponent>(glm::vec2(windowWidth - 84,10.0), glm::vec2(1,1), 0.0);
-    radar.addComponent<SpriteComponent>("radar",64,64,2);
+    radar.addComponent<SpriteComponent>("radar",64,64,2,0,0,true);
     radar.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
     radar.addComponent<AnimationComponent>(8, 7, true);
     
