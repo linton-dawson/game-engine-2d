@@ -17,6 +17,8 @@
 #include "../Components/BoxColliderComponent.hpp"
 #include "../Components/KeyboardControlledComponent.hpp"
 #include "../Components/CameraFollowComponent.hpp"
+#include "../Components/ProjectileEmitterComponent.hpp"
+#include "../Components/HealthComponent.hpp"
 #include "../Systems/MovementSystem.hpp"
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/CollisionSystem.hpp"
@@ -24,6 +26,8 @@
 #include "../Systems/DamageSystem.hpp"
 #include "../Systems/KeyboardMovementSystem.hpp"
 #include "../Systems/CameraMovementSystem.hpp"
+#include "../Systems/ProjectileEmitSystem.hpp"
+#include "../Systems/ProjectileLifecycleSystem.hpp"
 #include "../ECS/ECS.hpp"
 
 int Game::windowWidth, Game::windowHeight, Game::mapWidth, Game::mapHeight;
@@ -138,12 +142,15 @@ void Game::LoadLevel(int level) {
     registry->addSystem<DamageSystem>();
     registry->addSystem<KeyboardMovementSystem>();
     registry->addSystem<CameraMovementSystem>();
+    registry->addSystem<ProjectileEmitSystem>();
+    registry->addSystem<ProjectileLifecycleSystem>();
     
     //adding assets to the asset manager
     assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
     assetManager->addTexture(renderer, "chopper", "./assets/images/chopper-spritesheet.png");
     assetManager->addTexture(renderer, "radar", "./assets/images/radar.png");
     assetManager->addTexture(renderer, "jungle", "./assets/tilemaps/jungle.png");
+    assetManager->addTexture(renderer, "bullet", "./assets/images/bullet.png");
 
     auto tileObj = _readTileMap(std::filesystem::path("./assets/tilemaps/jungle.map"));
     int y = 0;
@@ -167,13 +174,15 @@ void Game::LoadLevel(int level) {
 
     // chopper
     Entity chopper = registry->createEntity();
-    chopper.addComponent<TransformComponent>(glm::vec2(0.0,100.0), glm::vec2(1,1), 0.0);
+    chopper.addComponent<TransformComponent>(glm::vec2(10.0,100.0), glm::vec2(1,1), 0.0);
     chopper.addComponent<SpriteComponent>("chopper",32,32);
-    chopper.addComponent<RigidBodyComponent>(glm::vec2(40.0, 0.0));
+    chopper.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
     chopper.addComponent<AnimationComponent>(2, 15, true);    
-    chopper.addComponent<BoxColliderComponent>(32,32);    
+    chopper.addComponent<BoxColliderComponent>(32,32); 
+    chopper.addComponent<HealthComponent>(100);
     chopper.addComponent<KeyboardControlledComponent>(glm::vec2(0,-70), glm::vec2(70,0), glm::vec2(0,70), glm::vec2(-70,0));
     chopper.addComponent<CameraFollowComponent>();
+    chopper.addComponent<ProjectileEmitterComponent>(glm::vec2(150.0,150.0),0,10000,0,true);
 
     // radar
     Entity radar = registry->createEntity();
@@ -186,8 +195,10 @@ void Game::LoadLevel(int level) {
     Entity tank = registry->createEntity();
     tank.addComponent<TransformComponent>(glm::vec2(500.0,10.0), glm::vec2(1,1), 0.0);
     tank.addComponent<SpriteComponent>("tank",32,32);
-    tank.addComponent<RigidBodyComponent>(glm::vec2(-40.0, 0.0));
+    tank.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
     tank.addComponent<BoxColliderComponent>(32,32);
+    tank.addComponent<HealthComponent>(100);
+    tank.addComponent<ProjectileEmitterComponent>(glm::vec2(100.0, 0), 5000, 3000, 0, false);
     
 }
 void Game::Setup() {
@@ -212,6 +223,7 @@ void Game::Update() {
     // perform subscription of events for all systems
     registry->getSystem<DamageSystem>().subscribeToEvents(eventBus);
     registry->getSystem<KeyboardMovementSystem>().subscribeToEvents(eventBus);
+    registry->getSystem<ProjectileEmitSystem>().subscribeToEvents(eventBus);
     
     // update registry queued actions
     registry->update();
@@ -220,6 +232,8 @@ void Game::Update() {
     registry->getSystem<AnimationSystem>().update();
     registry->getSystem<CollisionSystem>().update(eventBus);
     registry->getSystem<CameraMovementSystem>().update(camera);
+    registry->getSystem<ProjectileEmitSystem>().update(registry);
+    registry->getSystem<ProjectileLifecycleSystem>().update();
 }
 void Game::Render() {
     SDL_SetRenderDrawColor(renderer, 21, 21, 21, 255);
