@@ -31,6 +31,12 @@ class Entity {
         void kill();
         Entity& operator =(const Entity& other) = default;
 
+        //Manage entity tags and groups
+        void tag(const std::string& tag);
+        bool hasTag(const std::string& tag) const;
+        void group(const std::string& group);
+        bool belongsToGroup(const std::string& group) const;
+
         bool operator ==(const Entity& other) const { return id == other.id; }
         bool operator !=(const Entity& other) const { return id != other.id; }
         bool operator >(const Entity& other) const { return id > other.id; }
@@ -110,6 +116,12 @@ class Registry{
         std::unordered_map<std::type_index, std::shared_ptr<System>> systems;
         std::set<Entity> addEntityBuffer, removeEntityBuffer;
 
+        // basically we are using a bidirection map here
+        // TODO: User boost bimap
+        std::unordered_map<std::string, Entity> entityPerTag;
+        std::unordered_map<std::string, std::set<Entity>> entitiesPerGroup;
+        std::unordered_map<int, std::string> tagPerEntity, groupPerEntity;
+
         // list of free entityids that were removed, which can be reused
         std::deque<int> freeIds;
     public: 
@@ -130,6 +142,18 @@ class Registry{
         template<typename TSystem> void removeSystem();
         template<typename TSystem> bool hasSystem() const;
         template<typename TSystem> TSystem& getSystem() const;
+
+        //Tag management
+        void tagEntity(Entity entity, const std::string& tag);
+        bool entityHasTag(Entity entity, const std::string& tag) const;
+        Entity getEntityByTag(const std::string& tag) const;
+        void removeEntityTag(Entity entity);
+        
+        //Group management
+        void groupEntity(Entity entity, const std::string& group);
+        bool entityBelongsToGroup(Entity entity, const std::string& group);
+        std::vector<Entity> getEntityByGroup(const std::string& group) const;
+        void removeEntityGroup(Entity entity);
 
 };
 

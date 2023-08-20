@@ -161,6 +161,7 @@ void Game::LoadLevel(int level) {
         int x = tileIndex % tileObj.value().second;
         auto tileNumber = tileObj.value().first.at(tileIndex);
         Entity tile = registry->createEntity();
+        tile.group("tiles");
         tile.addComponent<TransformComponent>(glm::vec2(32*2*x, 32*2*y), glm::vec2(2.0,2.0),0.0);
         tile.addComponent<SpriteComponent>("jungle",32, 32, 32*(tileNumber%10), 32*(tileNumber/10));
     }

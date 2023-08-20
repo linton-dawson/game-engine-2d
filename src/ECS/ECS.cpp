@@ -13,6 +13,22 @@ void Entity::kill() {
     registry->killEntity(*this);
 }
 
+void Entity::tag(const std::string& tag) {
+    registry->tagEntity(*this, tag);
+}
+
+bool Entity::hasTag(const std::string& tag) const{
+    return registry->entityHasTag(*this,tag);
+}
+
+void Entity::group(const std::string& group) {
+    registry->groupEntity(*this, group);
+}
+
+bool Entity::belongsToGroup(const std::string& group) const {
+    return registry->entityBelongsToGroup(*this, group);
+}
+
 void System::addEntity(Entity entity) {
     entities.push_back(entity);
 }
@@ -72,6 +88,56 @@ void Registry::removeEntityFromSystem(Entity entity) {
         system.second->removeEntity(entity);
     }
 }
+
+void Registry::tagEntity(Entity entity, const std::string& tag) {
+    entityPerTag.emplace(tag, entity);
+}
+
+bool Registry::entityHasTag(Entity entity, const std::string& tag) const {
+    if(tagPerEntity.find(entity.getId()) == tagPerEntity.end())
+        return false;
+    return entityPerTag.find(tag)->second == entity;
+}
+
+Entity Registry::getEntityByTag(const std::string& tag) const {
+    return entityPerTag.at(tag);
+}
+
+void Registry::removeEntityTag(Entity entity) {
+    if(auto taggedEntity = tagPerEntity.find(entity.getId()); taggedEntity != tagPerEntity.end()) {
+        auto tag = taggedEntity->second;
+        entityPerTag.erase(tag);
+        tagPerEntity.erase(taggedEntity);
+    }
+}
+
+void Registry::groupEntity(Entity entity, const std::string& group) {
+    entitiesPerGroup.emplace(group, std::set<Entity>());
+    entitiesPerGroup.at(group).emplace(entity);
+    groupPerEntity.emplace(entity.getId(), group);
+}
+
+bool Registry::entityBelongsToGroup(Entity entity, const std::string& group) {
+    auto groupEntities = entitiesPerGroup.at(group);
+    return groupEntities.find(entity.getId()) != groupEntities.end();
+}
+
+std::vector<Entity> Registry::getEntityByGroup(const std::string& group) const {
+    auto& setOfEntities = entitiesPerGroup.find(group)->second;
+    return std::vector<Entity>(setOfEntities.begin(), setOfEntities.end());
+}
+
+void Registry::removeEntityGroup(Entity entity) {
+    if(auto groupedEntity = groupPerEntity.find(entity.getId()); groupedEntity != groupPerEntity.end()) {
+        if(auto group = entitiesPerGroup.find(groupedEntity->second); group != entitiesPerGroup.end()) {
+            if(auto entitiyInGroup = group->second.find(entity); entitiyInGroup != group->second.end()) {
+                group->second.erase(entitiyInGroup);
+            }
+        }
+        groupPerEntity.erase(groupedEntity);
+    }
+}
+
 void Registry::update() {
     // add queued entities to active Systems
     // TODO: Maybe improve 
@@ -85,6 +151,10 @@ void Registry::update() {
         removeEntityFromSystem(entity);
         freeIds.push_back(entity.getId());
         ecSignatures[entity.getId()].reset();
+
+        // entity tag and group cleanup
+        removeEntityTag(entity);
+        removeEntityGroup(entity);
     }
     removeEntityBuffer.clear();
 }
