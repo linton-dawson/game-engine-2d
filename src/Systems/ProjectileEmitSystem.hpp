@@ -27,7 +27,7 @@ class ProjectileEmitSystem : public System{
             if(event.symbol == SDLK_SPACE) {
                 Logger::Log("SPACE PRESSED");
                 for(auto entity : getSystemEntities()) {
-                    if(entity.hasComponent<CameraFollowComponent>()) {
+                    if(entity.hasTag("player")) {
                         const auto& projectileEmitter = entity.getComponent<ProjectileEmitterComponent>();
                         const auto transform = entity.getComponent<TransformComponent>();
                         const auto rigidBody = entity.getComponent<RigidBodyComponent>();
@@ -49,6 +49,7 @@ class ProjectileEmitSystem : public System{
                         projectileVelocity.y = projectileEmitter.velocity.y * directionY;
 
                         Entity projectile = entity.registry->createEntity();
+                        projectile.group("projectiles");
                         projectile.addComponent<TransformComponent>(projectilePosition, glm::vec2(1.0,1.0), 0.0);
                         projectile.addComponent<RigidBodyComponent>(projectileVelocity);
                         projectile.addComponent<SpriteComponent>("bullet", 4, 4);
@@ -77,6 +78,7 @@ class ProjectileEmitSystem : public System{
                     }
                     // adding new projectile entity to registry
                     Entity projectile = registry->createEntity();
+                    projectile.group("projectiles");
                     projectile.addComponent<TransformComponent>(projectilePosition, glm::vec2(1.0,1.0), 0.0);
                     projectile.addComponent<RigidBodyComponent>(projectileEmitter.velocity);
                     projectile.addComponent<SpriteComponent>("bullet", 4, 4);
