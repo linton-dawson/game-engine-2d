@@ -16,6 +16,10 @@ void AssetManager::clearAssets() {
         SDL_DestroyTexture(t.second);
     }
     textures.clear();
+    for(auto font: fonts) {
+        TTF_CloseFont(font.second);
+    }
+    fonts.clear();
 }
 
 void AssetManager::addTexture(SDL_Renderer* renderer, const std::string& assetId, const std::string& filePath) {
@@ -28,4 +32,12 @@ void AssetManager::addTexture(SDL_Renderer* renderer, const std::string& assetId
 
 SDL_Texture* AssetManager::getTexture(const std::string& assetId) const {
     return textures.at(assetId);
+}
+
+void AssetManager::addFont(const std::string& assetId, const std::string& filePath, int fontsize) {
+    fonts.emplace(assetId, TTF_OpenFont(filePath.c_str(), fontsize));
+}
+
+TTF_Font* AssetManager::getFont(const std::string& assetId) {
+    return fonts[assetId];
 }
