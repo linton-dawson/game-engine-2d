@@ -82,22 +82,68 @@ class System{
 class IPool {
     public:
         virtual ~IPool(){};
+        virtual void removeEntityFromPool(int entityId) = 0;
 };
 // A pool is just a vector of object type T
 template<typename TComponent>
 class Pool : public IPool {
     private:
         std::vector<TComponent> data;
+        int size;
+
+        //maps to keep data packed
+        std::unordered_map<int,int> entityIdToIndex;
+        std::unordered_map<int,int> indexToEntityId;
     public:
-        Pool(int size = 100) { data.resize(size); };
+        Pool(int capacity = 100) { size = 0; data.resize(capacity); };
         virtual ~Pool() = default;
-        bool isEmpty() { return data.empty(); }
-        int getSize() {return data.size();}
+        bool isEmpty() { return size==0; }
+        int getSize() {return size;}
         void resize(int newSize) {data.resize(newSize);}
-        void set(int index, TComponent obj) { data[index] = obj;}
-        void clear() {data.clear();}
+        void set(int entityId, TComponent obj) { 
+            if(entityIdToIndex.find(entityId) != entityIdToIndex.end()) {
+                int index = entityIdToIndex[entityId];
+                data[index] = obj;
+            }
+            else {
+                int index = size;
+                entityIdToIndex.emplace(entityId, index);
+                indexToEntityId.emplace(index, entityId);
+                if(index >= data.capacity()) {
+                    data.resize(size*2);
+                }
+                data[index] = obj;
+                size++;
+            }
+            Logger::Log("working till here");
+        }
+
+        void remove(int entityId) {
+            int indexOfRemoved = entityIdToIndex[entityId];
+            int indexOfLast = size - 1;
+            data[indexOfRemoved] = data[indexOfLast];
+
+            // update index-entityId maps
+            int entityIdOfLast = indexToEntityId[indexOfLast];
+            entityIdToIndex[entityIdOfLast] = indexOfRemoved;
+            indexToEntityId[indexOfRemoved] = entityIdOfLast;
+
+            entityIdToIndex.erase(entityId);
+            indexToEntityId.erase(indexOfLast);
+            size--;
+        }
+
+        void removeEntityFromPool(int entityId) override {
+            if(entityIdToIndex.find(entityId) != entityIdToIndex.end()) {
+                remove(entityId);
+            }
+        }
+        void clear() {size = 0; data.clear();}
         void add(TComponent object) {data.push_back(object);}
-        TComponent& get(int index) {return static_cast<TComponent&>(data[index]);}
+        TComponent& get(int entityId) {
+            int index = entityIdToIndex[entityId];
+            return static_cast<TComponent&>(data[index]);
+        }
         TComponent& operator [](unsigned int index) {return data[index];}
 };
 class Registry{
@@ -198,9 +244,6 @@ void Registry::addComponent(Entity entity, TArgs&& ...args) {
         componentPools[componentId] = newComponentPool;
     }
     std::shared_ptr<Pool<TComponent>> componentPool = std::static_pointer_cast<Pool<TComponent>>(componentPools[componentId]);
-    if(entityId >= componentPool->getSize()) {
-        componentPool->resize(numEntities);
-    }
     TComponent newComponent(std::forward<TArgs>(args)...);
     componentPool->set(entityId, newComponent);
 
@@ -213,6 +256,11 @@ template<typename TComponent>
 void Registry::removeComponent(Entity entity) {
     const auto componentId = Component<TComponent>::getId();
     const auto entityId = entity.getId();
+
+    //remove component from component list
+    std::shared_ptr<Pool<TComponent>> componentPool = std::static_pointer_cast<Pool<TComponent>>(componentPools[componentId]);
+    componentPool->remove(entityId);
+
     ecSignatures[entityId].set(componentId, false);
 }
 

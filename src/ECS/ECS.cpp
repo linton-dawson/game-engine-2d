@@ -14,6 +14,7 @@ void Entity::kill() {
 }
 
 void Entity::tag(const std::string& tag) {
+    Logger::Log("ADDING TAG " + tag);
     registry->tagEntity(*this, tag);
 }
 
@@ -22,6 +23,7 @@ bool Entity::hasTag(const std::string& tag) const{
 }
 
 void Entity::group(const std::string& group) {
+    Logger::Log("ADDING TO GROUP " + group);
     registry->groupEntity(*this, group);
 }
 
@@ -91,6 +93,7 @@ void Registry::removeEntityFromSystem(Entity entity) {
 
 void Registry::tagEntity(Entity entity, const std::string& tag) {
     entityPerTag.emplace(tag, entity);
+    tagPerEntity.emplace(entity.getId(),tag);
 }
 
 bool Registry::entityHasTag(Entity entity, const std::string& tag) const {
@@ -151,6 +154,13 @@ void Registry::update() {
         removeEntityFromSystem(entity);
         freeIds.push_back(entity.getId());
         ecSignatures[entity.getId()].reset();
+
+        //remove entity from component pools
+        for(auto pool : componentPools) {
+            if(pool) {
+                pool->removeEntityFromPool(entity.getId());
+            }
+        }
 
         // entity tag and group cleanup
         removeEntityTag(entity);

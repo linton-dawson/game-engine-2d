@@ -19,6 +19,7 @@
 #include "../Components/CameraFollowComponent.hpp"
 #include "../Components/ProjectileEmitterComponent.hpp"
 #include "../Components/HealthComponent.hpp"
+#include "../Components/TextLabelComponent.hpp"
 #include "../Systems/MovementSystem.hpp"
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/CollisionSystem.hpp"
@@ -28,6 +29,7 @@
 #include "../Systems/CameraMovementSystem.hpp"
 #include "../Systems/ProjectileEmitSystem.hpp"
 #include "../Systems/ProjectileLifecycleSystem.hpp"
+#include "../Systems/RenderTextSystem.hpp"
 #include "../ECS/ECS.hpp"
 
 int Game::windowWidth, Game::windowHeight, Game::mapWidth, Game::mapHeight;
@@ -43,6 +45,10 @@ Game::~Game() { Logger::Log("game object destroyed");}
 void Game::Init() {
     if(SDL_Init(SDL_INIT_EVERYTHING)) {
         std::cerr << "Error initializing SDL" << std::endl;
+        return;
+    }
+    if(TTF_Init() != 0) {
+        std::cerr << "Error initializing TTF" << std::endl;
         return;
     }
     SDL_DisplayMode displayMode;
@@ -144,13 +150,15 @@ void Game::LoadLevel(int level) {
     registry->addSystem<CameraMovementSystem>();
     registry->addSystem<ProjectileEmitSystem>();
     registry->addSystem<ProjectileLifecycleSystem>();
-    
+    registry->addSystem<RenderTextSystem>();
+
     //adding assets to the asset manager
     assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
     assetManager->addTexture(renderer, "chopper", "./assets/images/chopper-spritesheet.png");
     assetManager->addTexture(renderer, "radar", "./assets/images/radar.png");
     assetManager->addTexture(renderer, "jungle", "./assets/tilemaps/jungle.png");
     assetManager->addTexture(renderer, "bullet", "./assets/images/bullet.png");
+    assetManager->addFont("charriot","./assets/fonts/charriot.ttf",34);
 
     auto tileObj = _readTileMap(std::filesystem::path("./assets/tilemaps/jungle.map"));
     int y = 0;
@@ -175,6 +183,7 @@ void Game::LoadLevel(int level) {
 
     // chopper
     Entity chopper = registry->createEntity();
+    chopper.tag("player");
     chopper.addComponent<TransformComponent>(glm::vec2(10.0,100.0), glm::vec2(1,1), 0.0);
     chopper.addComponent<SpriteComponent>("chopper",32,32);
     chopper.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
@@ -183,9 +192,9 @@ void Game::LoadLevel(int level) {
     chopper.addComponent<HealthComponent>(100);
     chopper.addComponent<KeyboardControlledComponent>(glm::vec2(0,-70), glm::vec2(70,0), glm::vec2(0,70), glm::vec2(-70,0));
     chopper.addComponent<CameraFollowComponent>();
-    chopper.addComponent<ProjectileEmitterComponent>(glm::vec2(150.0,150.0),0,10000,0,true);
+    chopper.addComponent<ProjectileEmitterComponent>(glm::vec2(150.0,150.0),0,10000,10,true);
 
-    // radar
+    // radar&
     Entity radar = registry->createEntity();
     radar.addComponent<TransformComponent>(glm::vec2(windowWidth - 84,10.0), glm::vec2(1,1), 0.0);
     radar.addComponent<SpriteComponent>("radar",64,64,2,0,0,true);
@@ -194,12 +203,17 @@ void Game::LoadLevel(int level) {
     
     //tank
     Entity tank = registry->createEntity();
+    tank.group("enemies");
     tank.addComponent<TransformComponent>(glm::vec2(500.0,10.0), glm::vec2(1,1), 0.0);
     tank.addComponent<SpriteComponent>("tank",32,32);
     tank.addComponent<RigidBodyComponent>(glm::vec2(0.0, 0.0));
     tank.addComponent<BoxColliderComponent>(32,32);
     tank.addComponent<HealthComponent>(100);
-    tank.addComponent<ProjectileEmitterComponent>(glm::vec2(100.0, 0), 5000, 3000, 0, false);
+    tank.addComponent<ProjectileEmitterComponent>(glm::vec2(100.0, 0), 5000, 3000, 50, false);
+
+    Entity label = registry->createEntity();
+    SDL_Color color = {255,255,255};
+    label.addComponent<TextLabelComponent>(glm::vec2(windowWidth/2 - 40,10), "TEST GAME v0", "charriot", color, true);
     
 }
 void Game::Setup() {
@@ -241,6 +255,7 @@ void Game::Render() {
     SDL_RenderClear(renderer);
     
     registry->getSystem<RenderSystem>().update(renderer, assetManager, camera);
+    registry->getSystem<RenderTextSystem>().update(renderer, assetManager, camera);
     SDL_RenderPresent(renderer);
 }
 void Game::Destroy() {
