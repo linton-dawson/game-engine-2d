@@ -30,6 +30,7 @@
 #include "../Systems/ProjectileEmitSystem.hpp"
 #include "../Systems/ProjectileLifecycleSystem.hpp"
 #include "../Systems/RenderTextSystem.hpp"
+#include "../Systems/RenderHealthBarSystem.hpp"
 #include "../ECS/ECS.hpp"
 
 int Game::windowWidth, Game::windowHeight, Game::mapWidth, Game::mapHeight;
@@ -151,6 +152,7 @@ void Game::LoadLevel(int level) {
     registry->addSystem<ProjectileEmitSystem>();
     registry->addSystem<ProjectileLifecycleSystem>();
     registry->addSystem<RenderTextSystem>();
+    registry->addSystem<RenderHealthBarSystem>();
 
     //adding assets to the asset manager
     assetManager->addTexture(renderer, "tank", "./assets/images/tank-panther-right.png");
@@ -158,7 +160,8 @@ void Game::LoadLevel(int level) {
     assetManager->addTexture(renderer, "radar", "./assets/images/radar.png");
     assetManager->addTexture(renderer, "jungle", "./assets/tilemaps/jungle.png");
     assetManager->addTexture(renderer, "bullet", "./assets/images/bullet.png");
-    assetManager->addFont("charriot","./assets/fonts/charriot.ttf",34);
+    assetManager->addFont("charriot","./assets/fonts/charriot.ttf",5);
+    assetManager->addFont("arial","./assets/fonts/arial.ttf",10);
 
     auto tileObj = _readTileMap(std::filesystem::path("./assets/tilemaps/jungle.map"));
     int y = 0;
@@ -256,6 +259,7 @@ void Game::Render() {
     
     registry->getSystem<RenderSystem>().update(renderer, assetManager, camera);
     registry->getSystem<RenderTextSystem>().update(renderer, assetManager, camera);
+    registry->getSystem<RenderHealthBarSystem>().update(renderer, assetManager, camera);
     SDL_RenderPresent(renderer);
 }
 void Game::Destroy() {

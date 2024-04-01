@@ -14,7 +14,6 @@ void Entity::kill() {
 }
 
 void Entity::tag(const std::string& tag) {
-    Logger::Log("ADDING TAG " + tag);
     registry->tagEntity(*this, tag);
 }
 
@@ -23,7 +22,6 @@ bool Entity::hasTag(const std::string& tag) const{
 }
 
 void Entity::group(const std::string& group) {
-    Logger::Log("ADDING TO GROUP " + group);
     registry->groupEntity(*this, group);
 }
 

@@ -22,6 +22,7 @@ class RenderTextSystem : public System {
                 SDL_QueryTexture(texture, nullptr, nullptr, &labelWidth, &labelHeight);
                 SDL_Rect destRect = {static_cast<int>(textLabel.pos.x - (textLabel.isFixed ? 0 : camera.x)), static_cast<int>(textLabel.pos.y - (textLabel.isFixed ? 0 : camera.y)), labelWidth, labelHeight};
                 SDL_RenderCopy(renderer, texture, nullptr, &destRect);
+                SDL_DestroyTexture(texture);
             }
         }
 };

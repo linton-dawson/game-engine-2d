@@ -24,7 +24,6 @@ class DamageSystem: public System {
             if(a.belongsToGroup("projectiles")) {
                 Logger::Log("DamageSystem: Collision between " + std::to_string(event.a.getId()) + " and " + std::to_string(event.b.getId()));
                 if(b.hasTag("player")) {
-                    Logger::Log("VALID COLLISION !!!!!");
                     onProjectileHitPlayer(a,b);
                 }
                 if(b.belongsToGroup("enemies")) {
@@ -34,7 +33,6 @@ class DamageSystem: public System {
             if(b.belongsToGroup("projectiles")) {
                 Logger::Log("DamageSystem: Collision between " + std::to_string(event.a.getId()) + " and " + std::to_string(event.b.getId()));
                 if(a.hasTag("player")) {
-                    Logger::Log("VALID COLLISION !!!!!");
                     onProjectileHitPlayer(b,a);
                 }
                 if(a.belongsToGroup("enemies")) {

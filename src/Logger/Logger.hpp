@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
+#include "spdlog/spdlog.h"
 enum class LogType {
     INFO,
     WARN,
